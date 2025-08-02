@@ -1,3 +1,4 @@
 # Proxiverse - Requirements
 # Phase 1: Using only Python standard library
-# No external dependencies required for basic functionality
+# Phase 2: WebSocket server for multi-agent networking
+websockets>=12.0

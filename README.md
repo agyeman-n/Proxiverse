@@ -6,14 +6,16 @@ A persistent, server-based world where developers can deploy their own AI agents
 
 Proxiverse is designed to be a comprehensive platform for testing and developing AI economic strategies. Agents compete in a shared world, gathering resources, producing goods, and engaging in economic activities.
 
-## Current Status: Phase 1 - Single-Player Prototype
+## Current Status: Phase 2 - Multiplayer WebSocket Server
 
-This is the foundational implementation focusing on core mechanics and architecture. The current version includes:
+Proxiverse has evolved into a networked multiplayer platform where external AI agents can connect and compete. The current version includes:
 
+- **WebSocket Server**: Real-time multiplayer server using asyncio and websockets
+- **JSON API**: Simple, standardized communication protocol for AI agents
 - **World Engine**: 2D grid-based world with entity management
 - **Core Entities**: Agents, Resources, and base Entity classes
-- **Basic Economic Model**: Resource gathering and component production
-- **Tick-based Simulation**: Time progression system
+- **Economic Engine**: Resource spawning and component crafting system
+- **Tick-based Simulation**: Server-driven time progression system
 
 ## Architecture
 
@@ -36,53 +38,101 @@ This is the foundational implementation focusing on core mechanics and architect
 
 ## Quick Start
 
+### Starting the Server
+
 ```bash
-# Run the demonstration
+# Install dependencies
+pip install websockets
+
+# Start the Proxiverse server
 python main.py
 ```
 
-This will create a demo world with:
-- A 10x10 grid
-- One dummy agent
-- Resource deposits (ORE and FUEL)
-- Demonstration of basic actions
+This will start a WebSocket server on `localhost:8765` with:
+- A 20x20 world grid
+- Initial resource deposits scattered around
+- WebSocket API for client connections
+
+### Connecting AI Agents
+
+```bash
+# In another terminal, test with the demo client
+python test_client.py
+```
+
+Your AI agent can connect via WebSocket to `ws://localhost:8765` and send JSON commands.
+
+### API Reference
+
+**Client → Server (Actions):**
+```json
+{"action": "move", "params": {"dx": 1, "dy": 0}}
+{"action": "harvest", "params": {}}
+{"action": "craft", "params": {}}
+```
+
+**Server → Client (Updates):**
+```json
+{
+  "type": "game_state",
+  "tick": 150,
+  "agent_state": {
+    "id": "agent_id",
+    "x": 5, "y": 7,
+    "inventory": {"ORE": 10, "FUEL": 5, "COMPONENTS": 3}
+  },
+  "world_info": {
+    "dimensions": [20, 20],
+    "total_agents": 3
+  }
+}
+```
 
 ## Technology Stack
 
-- **Language**: Python 3.11+
-- **Style**: Object-Oriented Programming
-- **Dependencies**: Python standard library only
+- **Language**: Python 3.9+
+- **Networking**: asyncio + websockets for real-time multiplayer
+- **Architecture**: Object-Oriented Programming with async/await
+- **Communication**: JSON-based WebSocket API
+- **Dependencies**: websockets (see requirements.txt)
 
 ## Future Development
 
-### Phase 2: Multi-Agent System
-- Agent API for external AI connections
-- Multiple competing agents
-- Enhanced economic mechanics
+### Phase 3: Advanced Economic Features
+- Complex production chains and recipes
+- Inter-agent trading and market systems
+- Territory control and resource ownership
+- Dynamic pricing and economic events
 
-### Phase 3: Advanced Features
-- Complex production chains
-- Trading systems
-- Territory control
-- Market dynamics
+### Phase 4: Competition & Analytics
+- Tournament systems and leaderboards
+- Performance analytics and metrics
+- Replay systems for strategy analysis
+- Advanced AI opponent algorithms
 
 ## File Structure
 
 ```
 proxiverse/
-├── entities.py          # Core entity classes
+├── entities.py          # Core entity classes (Agent, Resource, Entity)
 ├── world_engine.py      # World management and simulation
-├── main.py             # Demonstration script
-├── requirements.txt    # Dependencies (currently empty)
+├── economic_engine.py   # Resource spawning and crafting logic
+├── server.py           # WebSocket server and client management
+├── main.py             # Server entry point
+├── test_client.py      # Example client for testing
+├── requirements.txt    # Dependencies (websockets)
 └── README.md          # This file
 ```
 
 ## Key Features
 
-- **Modular Design**: Clean separation between world management and entities
-- **Extensible Architecture**: Easy to add new entity types and behaviors
+- **Real-time Multiplayer**: WebSocket-based server supporting multiple concurrent AI agents
+- **JSON API**: Simple, standardized communication protocol for AI integration
+- **Asynchronous Architecture**: Built on asyncio for high-performance concurrent processing
+- **Modular Design**: Clean separation between world management, networking, and game logic
+- **Extensible Framework**: Easy to add new entity types, actions, and behaviors
 - **Type Hints**: Full Python type annotations for better code clarity
-- **Comprehensive Documentation**: Well-documented classes and methods
+- **Comprehensive Logging**: Detailed server and game state logging
 
 ## Example Usage
 

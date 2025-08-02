@@ -248,40 +248,7 @@ class Agent(Entity):
         
         return False
     
-    def think(self, world_engine, economic_engine) -> None:
-        """
-        Agent's decision-making logic.
-        
-        Priority list:
-        1. If inventory has >= 1 ORE and >= 1 FUEL, craft component
-        2. Else, if standing on a resource, harvest it
-        3. Else, move randomly
-        
-        Args:
-            world_engine: The WorldEngine instance
-            economic_engine: The EconomicEngine instance
-        """
-        # Priority 1: Craft component if possible
-        if self.can_produce_components():
-            if economic_engine.craft_component(self):
-                return  # Successfully crafted, done for this tick
-        
-        # Priority 2: Harvest if standing on a resource
-        if self.harvest(world_engine):
-            return  # Successfully harvested, done for this tick
-        
-        # Priority 3: Move randomly
-        # Generate random movement (-1, 0, or 1 for each direction)
-        dx = random.randint(-1, 1)
-        dy = random.randint(-1, 1)
-        
-        # Don't stay in place (dx=0, dy=0)
-        if dx == 0 and dy == 0:
-            # Choose a random direction
-            directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-            dx, dy = random.choice(directions)
-        
-        self.move(world_engine, dx, dy)
+
     
     def __repr__(self) -> str:
         return f"Agent(id={self.id[:8]}..., name={self.name}, x={self.x}, y={self.y}, inventory={self.inventory})"

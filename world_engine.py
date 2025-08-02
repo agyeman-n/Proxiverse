@@ -200,7 +200,8 @@ class WorldEngine:
         Advance the simulation by one tick.
         
         This is the main simulation loop method that handles entity updates,
-        resource management, and game logic.
+        resource management, and game logic. Agent actions are now processed
+        externally through the server's action queue.
         
         Args:
             economic_engine: Optional EconomicEngine instance for resource spawning
@@ -211,11 +212,8 @@ class WorldEngine:
         if economic_engine and economic_engine.should_spawn_resources():
             economic_engine.spawn_resources()
         
-        # Process all agents
-        agents = self.get_entities_by_type(Agent)
-        for agent in agents:
-            if economic_engine:
-                agent.think(self, economic_engine)
+        # Note: Agent actions are now processed by the server before tick()
+        # The tick method focuses on world state updates and resource management
         
         print(f"Tick {self.current_tick}: World ticked.")
     
