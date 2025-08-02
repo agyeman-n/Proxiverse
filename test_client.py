@@ -32,7 +32,7 @@ async def test_client():
             commands = [
                 {"action": "move", "params": {"dx": 1, "dy": 0}},  # Move to resource at (11, 10)
                 {"action": "harvest", "params": {}},                 # Harvest the ORE
-                {"action": "move", "params": {"dx": 0, "dy": 1}},   # Move to resource at (11, 11)
+                {"action": "move", "params": {"dx": -1, "dy": 1}},  # Move to resource at (10, 11)
                 {"action": "harvest", "params": {}},                 # Harvest the FUEL
                 {"action": "craft", "params": {}},                   # Craft component
             ]
@@ -41,20 +41,34 @@ async def test_client():
                 logger.info(f"Sending command {i+1}: {command}")
                 await websocket.send(json.dumps(command))
                 
-                # Wait for state update after sending command (don't sleep first!)
+                # Wait for responses after sending command
                 try:
+                    # Get first response (action_confirmed or game_state)
                     response = await asyncio.wait_for(websocket.recv(), timeout=3.0)
                     response_data = json.loads(response)
                     logger.info(f"Server response: {response_data['type']}")
+                    
                     if response_data['type'] == 'game_state':
                         agent_state = response_data['agent_state']
                         logger.info(f"Agent position: ({agent_state['x']}, {agent_state['y']})")
                         logger.info(f"Agent inventory: {agent_state['inventory']}")
+                    elif response_data['type'] == 'action_confirmed':
+                        # Wait for the game_state update that follows
+                        try:
+                            state_response = await asyncio.wait_for(websocket.recv(), timeout=2.0)
+                            state_data = json.loads(state_response)
+                            if state_data['type'] == 'game_state':
+                                agent_state = state_data['agent_state']
+                                logger.info(f"Agent position: ({agent_state['x']}, {agent_state['y']})")
+                                logger.info(f"Agent inventory: {agent_state['inventory']}")
+                        except asyncio.TimeoutError:
+                            logger.info("No state update received after action confirmation")
+                            
                 except asyncio.TimeoutError:
                     logger.info("No response from server within 3 seconds")
                 
-                # Brief pause between commands
-                await asyncio.sleep(1)
+                # Longer pause between commands to ensure server processing
+                await asyncio.sleep(2)
             
             logger.info("Test commands completed. Staying connected for a few more seconds...")
             await asyncio.sleep(10)  # Stay connected longer

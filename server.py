@@ -112,12 +112,80 @@ class Server:
                 }))
                 return
             
-            # Add action to queue for processing during next tick
-            await self.action_queue.put({
-                "agent_id": agent_id,
-                "action": data.get("action"),
-                "params": data.get("params", {})
-            })
+            action = data.get("action")
+            params = data.get("params", {})
+            
+            agent = self.agents.get(agent_id)
+            if not agent:
+                await websocket.send(json.dumps({
+                    "type": "error",
+                    "message": "Agent not found"
+                }))
+                return
+            
+            # Process action and send response
+            try:
+                logger.info(f"Processing action: {action} with params: {params}")
+                
+                success = False
+                if action == "move":
+                    dx = params.get("dx", 0)
+                    dy = params.get("dy", 0)
+                    success = agent.move(self.world_engine, dx, dy)
+                    logger.info(f"Agent {agent.name} moved to ({agent.x}, {agent.y}) - Success: {success}")
+                    
+                elif action == "harvest":
+                    success = agent.harvest(self.world_engine)
+                    logger.info(f"Agent {agent.name} harvested at ({agent.x}, {agent.y}) - Success: {success}")
+                    
+                elif action == "craft":
+                    success = self.economic_engine.craft_component(agent)
+                    logger.info(f"Agent {agent.name} crafted component - Success: {success}")
+                else:
+                    logger.warning(f"Unknown action: {action}")
+                    await websocket.send(json.dumps({
+                        "type": "error",
+                        "message": f"Unknown action: {action}"
+                    }))
+                    return
+                
+                # ALWAYS send action_confirmed first
+                logger.info(f"Sending action_confirmed for {action}")
+                await websocket.send(json.dumps({
+                    "type": "action_confirmed",
+                    "action": action,
+                    "success": success
+                }))
+                
+                # ALWAYS send game_state second
+                logger.info(f"Sending game_state for {action}")
+                world_state = self.world_engine.get_world_state()
+                state_update = {
+                    "type": "game_state",
+                    "tick": world_state["tick"],
+                    "agent_state": {
+                        "id": agent.id,
+                        "name": agent.name,
+                        "x": agent.x,
+                        "y": agent.y,
+                        "inventory": agent.inventory
+                    },
+                    "world_info": {
+                        "dimensions": world_state["dimensions"],
+                        "total_entities": world_state["entity_count"],
+                        "total_agents": world_state["agents"],
+                        "total_resources": world_state["resources"]
+                    }
+                }
+                await websocket.send(json.dumps(state_update))
+                logger.info(f"Completed processing action: {action}")
+                
+            except Exception as e:
+                logger.error(f"Error processing action {action}: {e}")
+                await websocket.send(json.dumps({
+                    "type": "error",
+                    "message": f"Action failed: {e}"
+                }))
             
         except json.JSONDecodeError:
             await websocket.send(json.dumps({
@@ -167,8 +235,6 @@ class Server:
                         "total_resources": world_state["resources"]
                     }
                 }
-                
-
                 
                 await websocket.send(json.dumps(update))
                 

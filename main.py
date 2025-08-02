@@ -71,14 +71,14 @@ async def simulation_loop(world_engine: WorldEngine, economic_engine: EconomicEn
     
     try:
         while True:
-            # Process pending actions from clients
-            await server.process_action_queue()
+            # Actions are now processed immediately when received
+            # No need to process action queue here
             
             # Advance the world simulation
             world_engine.tick(economic_engine)
             
-            # Send world state updates to all clients
-            await server.broadcast_world_state()
+            # Send world state updates to all clients (disabled to prevent interference)
+            # await server.broadcast_world_state()
             
             tick_count += 1
             

@@ -214,7 +214,7 @@ class Agent(Entity):
         
         # Allow movement if cell is empty or only contains resources
         for entity in entities_at_target:
-            if hasattr(entity, 'name'):  # This is an agent
+            if hasattr(entity, 'name') and entity.id != self.id:  # This is another agent (not self)
                 return False  # Can't move to cell with another agent
         
         # Move the agent
