@@ -195,21 +195,29 @@ class WorldEngine:
         
         return nearby_entities
     
-    def tick(self) -> None:
+    def tick(self, economic_engine=None) -> None:
         """
         Advance the simulation by one tick.
         
-        This is the main simulation loop method that will eventually
-        handle entity updates, resource management, and game logic.
+        This is the main simulation loop method that handles entity updates,
+        resource management, and game logic.
+        
+        Args:
+            economic_engine: Optional EconomicEngine instance for resource spawning
         """
         self.current_tick += 1
-        print(f"Tick {self.current_tick}: World ticked.")
         
-        # TODO: In future iterations, this will:
-        # - Allow each entity to perform actions
-        # - Update resource spawning
-        # - Handle economic calculations
-        # - Process agent AI decisions
+        # Spawn resources periodically if economic engine is provided
+        if economic_engine and economic_engine.should_spawn_resources():
+            economic_engine.spawn_resources()
+        
+        # Process all agents
+        agents = self.get_entities_by_type(Agent)
+        for agent in agents:
+            if economic_engine:
+                agent.think(self, economic_engine)
+        
+        print(f"Tick {self.current_tick}: World ticked.")
     
     def get_world_state(self) -> Dict:
         """

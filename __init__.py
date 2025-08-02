@@ -8,8 +8,9 @@ building complex AI economic simulations.
 
 from .entities import Entity, Resource, Agent
 from .world_engine import WorldEngine
+from .economic_engine import EconomicEngine
 
 __version__ = "1.0.0"
 __author__ = "Proxiverse Team"
 
-__all__ = ["Entity", "Resource", "Agent", "WorldEngine"]
+__all__ = ["Entity", "Resource", "Agent", "WorldEngine", "EconomicEngine"]

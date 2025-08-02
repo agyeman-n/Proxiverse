@@ -7,7 +7,8 @@ This module defines the fundamental entities that exist within the simulation wo
 - Agent: Represents AI-controlled entities with inventories
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
+import random
 import uuid
 
 
@@ -187,6 +188,100 @@ class Agent(Entity):
             self.add_to_inventory('COMPONENTS', max_producible)
         
         return max_producible
+    
+    def move(self, world_engine, dx: int, dy: int) -> bool:
+        """
+        Move the agent by the specified delta if the target cell is within bounds.
+        Agent can move to cells with resources (to harvest them) but not to cells with other agents.
+        
+        Args:
+            world_engine: The WorldEngine instance
+            dx: Change in x coordinate
+            dy: Change in y coordinate
+            
+        Returns:
+            True if movement was successful, False otherwise
+        """
+        new_x = self.x + dx
+        new_y = self.y + dy
+        
+        # Check if new position is within bounds
+        if not world_engine.is_valid_position(new_x, new_y):
+            return False
+        
+        # Check what's at the target position
+        entities_at_target = world_engine.get_entity_at(new_x, new_y)
+        
+        # Allow movement if cell is empty or only contains resources
+        for entity in entities_at_target:
+            if hasattr(entity, 'name'):  # This is an agent
+                return False  # Can't move to cell with another agent
+        
+        # Move the agent
+        world_engine.move_entity(self, new_x, new_y)
+        return True
+    
+    def harvest(self, world_engine) -> bool:
+        """
+        Harvest resources at the agent's current position.
+        
+        Args:
+            world_engine: The WorldEngine instance
+            
+        Returns:
+            True if harvesting was successful, False otherwise
+        """
+        entities_here = world_engine.get_entity_at(self.x, self.y)
+        
+        for entity in entities_here:
+            if hasattr(entity, 'resource_type') and hasattr(entity, 'harvest'):
+                # This is a resource entity
+                harvested_amount = entity.harvest(10)  # Harvest up to 10 units
+                if harvested_amount > 0:
+                    self.add_to_inventory(entity.resource_type, harvested_amount)
+                    
+                    # Remove depleted resources from world
+                    if entity.is_depleted():
+                        world_engine.remove_entity(entity)
+                    
+                    return True
+        
+        return False
+    
+    def think(self, world_engine, economic_engine) -> None:
+        """
+        Agent's decision-making logic.
+        
+        Priority list:
+        1. If inventory has >= 1 ORE and >= 1 FUEL, craft component
+        2. Else, if standing on a resource, harvest it
+        3. Else, move randomly
+        
+        Args:
+            world_engine: The WorldEngine instance
+            economic_engine: The EconomicEngine instance
+        """
+        # Priority 1: Craft component if possible
+        if self.can_produce_components():
+            if economic_engine.craft_component(self):
+                return  # Successfully crafted, done for this tick
+        
+        # Priority 2: Harvest if standing on a resource
+        if self.harvest(world_engine):
+            return  # Successfully harvested, done for this tick
+        
+        # Priority 3: Move randomly
+        # Generate random movement (-1, 0, or 1 for each direction)
+        dx = random.randint(-1, 1)
+        dy = random.randint(-1, 1)
+        
+        # Don't stay in place (dx=0, dy=0)
+        if dx == 0 and dy == 0:
+            # Choose a random direction
+            directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            dx, dy = random.choice(directions)
+        
+        self.move(world_engine, dx, dy)
     
     def __repr__(self) -> str:
         return f"Agent(id={self.id[:8]}..., name={self.name}, x={self.x}, y={self.y}, inventory={self.inventory})"
