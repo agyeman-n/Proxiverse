@@ -171,7 +171,9 @@ class WorldEngine:
         Returns:
             List of entities of the specified type
         """
-        return [entity for entity in self.entities.values() if isinstance(entity, entity_type)]
+        # Create a copy of entities values to avoid modification during iteration
+        entities_copy = list(self.entities.values())
+        return [entity for entity in entities_copy if isinstance(entity, entity_type)]
     
     def get_nearby_entities(self, x: int, y: int, radius: int = 1) -> List[Entity]:
         """
