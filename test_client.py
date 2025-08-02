@@ -41,12 +41,9 @@ async def test_client():
                 logger.info(f"Sending command {i+1}: {command}")
                 await websocket.send(json.dumps(command))
                 
-                # Wait longer for processing
-                await asyncio.sleep(4)
-                
-                # Try to receive any server messages
+                # Wait for state update after sending command (don't sleep first!)
                 try:
-                    response = await asyncio.wait_for(websocket.recv(), timeout=1.0)
+                    response = await asyncio.wait_for(websocket.recv(), timeout=3.0)
                     response_data = json.loads(response)
                     logger.info(f"Server response: {response_data['type']}")
                     if response_data['type'] == 'game_state':
@@ -54,7 +51,10 @@ async def test_client():
                         logger.info(f"Agent position: ({agent_state['x']}, {agent_state['y']})")
                         logger.info(f"Agent inventory: {agent_state['inventory']}")
                 except asyncio.TimeoutError:
-                    logger.info("No immediate response from server")
+                    logger.info("No response from server within 3 seconds")
+                
+                # Brief pause between commands
+                await asyncio.sleep(1)
             
             logger.info("Test commands completed. Staying connected for a few more seconds...")
             await asyncio.sleep(10)  # Stay connected longer
