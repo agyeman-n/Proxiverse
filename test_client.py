@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 async def test_client():
     """Test client that connects to the server and sends some basic commands."""
-    uri = "ws://localhost:8765"
+    uri = "ws://localhost:8765/ws"
     
     try:
         logger.info(f"Connecting to Proxiverse server at {uri}")

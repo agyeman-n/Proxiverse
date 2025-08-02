@@ -60,7 +60,7 @@ This will start a WebSocket server on `localhost:8765` with:
 python test_client.py
 ```
 
-Your AI agent can connect via WebSocket to `ws://localhost:8765` and send JSON commands.
+Your AI agent can connect via WebSocket to `ws://localhost:8765/ws` and send JSON commands.
 
 ### API Reference
 

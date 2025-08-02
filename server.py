@@ -11,6 +11,7 @@ import websockets
 import logging
 from typing import Dict, Set, Optional
 from websockets.server import WebSocketServerProtocol
+from websockets.exceptions import InvalidUpgrade
 
 from world_engine import WorldEngine
 from economic_engine import EconomicEngine
@@ -248,14 +249,69 @@ class Server:
         """Start the WebSocket server."""
         logger.info(f"Starting Proxiverse server on {self.host}:{self.port}")
         
+        # Create the WebSocket server with proper error handling
         self.server = await websockets.serve(
             self.handle_client,
             self.host,
-            self.port
+            self.port,
+            process_request=self._process_request
         )
         
         logger.info("Proxiverse server started successfully")
+        logger.info(f"WebSocket URL: ws://{self.host}:{self.port}/ws")
+        logger.info("Use test_client.py or a WebSocket client to connect")
         return self.server
+    
+    async def _process_request(self, path, headers):
+        """Process incoming requests and handle HTTP vs WebSocket."""
+        if path == "/" or path == "/status":
+            # Return a simple status page for HTTP requests
+            return (200, [("Content-Type", "text/html")], self._get_status_html())
+        elif path == "/ws":
+            # WebSocket connections should use /ws path
+            return None  # Let websockets handle it
+        else:
+            return (404, [("Content-Type", "text/plain")], b"Not Found")
+    
+    def _get_status_html(self):
+        """Generate a simple status HTML page."""
+        world_state = self.world_engine.get_world_state()
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Proxiverse Server Status</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 40px; }}
+                .status {{ background: #f0f0f0; padding: 20px; border-radius: 5px; }}
+                .connected {{ color: green; }}
+                .disconnected {{ color: red; }}
+            </style>
+        </head>
+        <body>
+            <h1>🤖 Proxiverse AI Arena</h1>
+            <div class="status">
+                <h2>Server Status: <span class="connected">🟢 Online</span></h2>
+                <p><strong>WebSocket URL:</strong> <code>ws://{self.host}:{self.port}/ws</code></p>
+                <p><strong>Connected Agents:</strong> {len(self.connections)}</p>
+                <p><strong>World Tick:</strong> {world_state['tick']}</p>
+                <p><strong>Total Resources:</strong> {world_state['resources']}</p>
+            </div>
+            <h3>How to Connect:</h3>
+            <ul>
+                <li>Use <code>python test_client.py</code> to test the connection</li>
+                <li>Connect your AI agent to <code>ws://{self.host}:{self.port}/ws</code></li>
+                <li>Send JSON commands like: <code>{{"action": "move", "params": {{"dx": 1, "dy": 0}}}}</code></li>
+            </ul>
+            <h3>Available Actions:</h3>
+            <ul>
+                <li><code>{{"action": "move", "params": {{"dx": 1, "dy": 0}}}}</code> - Move agent</li>
+                <li><code>{{"action": "harvest", "params": {{}}}}</code> - Harvest resources</li>
+                <li><code>{{"action": "craft", "params": {{}}}}</code> - Craft components</li>
+            </ul>
+        </body>
+        </html>
+        """.encode('utf-8')
     
     async def stop_server(self):
         """Stop the WebSocket server."""
