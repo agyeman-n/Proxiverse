@@ -139,10 +139,11 @@ class Server:
         # Prepare world state data
         world_state = self.world_engine.get_world_state()
         
-        # Send personalized state to each client
+        # Create a copy of connections to avoid modification during iteration
+        connections_copy = list(self.connections.items())
         disconnected_clients = []
         
-        for websocket, agent_id in self.connections.items():
+        for websocket, agent_id in connections_copy:
             try:
                 agent = self.agents.get(agent_id)
                 if not agent:
@@ -166,6 +167,8 @@ class Server:
                         "total_resources": world_state["resources"]
                     }
                 }
+                
+
                 
                 await websocket.send(json.dumps(update))
                 
