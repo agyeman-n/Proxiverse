@@ -26,7 +26,7 @@ def create_initial_world():
     # Create a larger world for multiplayer
     world = WorldEngine(width=20, height=20)
     
-    # Add some initial resources scattered around
+    # Add some initial resources scattered around, including near spawn point
     initial_resources = [
         (3, 3, "ORE", 80),
         (16, 4, "FUEL", 70),
@@ -38,6 +38,11 @@ def create_initial_world():
         (12, 18, "FUEL", 80),
         (1, 10, "ORE", 70),
         (19, 8, "FUEL", 75),
+        # Add resources near spawn point (10, 10)
+        (11, 10, "ORE", 50),  # Right next to spawn
+        (10, 11, "FUEL", 40),  # Below spawn
+        (9, 10, "ORE", 60),    # Left of spawn
+        (10, 9, "FUEL", 55),   # Above spawn
     ]
     
     for x, y, resource_type, quantity in initial_resources:

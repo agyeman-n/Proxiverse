@@ -30,23 +30,23 @@ async def test_client():
             
             # Send some test commands
             commands = [
-                {"action": "move", "params": {"dx": 1, "dy": 0}},
-                {"action": "move", "params": {"dx": 0, "dy": 1}},
-                {"action": "harvest", "params": {}},
-                {"action": "move", "params": {"dx": -1, "dy": 0}},
-                {"action": "craft", "params": {}},
+                {"action": "move", "params": {"dx": 1, "dy": 0}},  # Move to resource at (11, 10)
+                {"action": "harvest", "params": {}},                 # Harvest the ORE
+                {"action": "move", "params": {"dx": 0, "dy": 1}},   # Move to resource at (11, 11)
+                {"action": "harvest", "params": {}},                 # Harvest the FUEL
+                {"action": "craft", "params": {}},                   # Craft component
             ]
             
             for i, command in enumerate(commands):
                 logger.info(f"Sending command {i+1}: {command}")
                 await websocket.send(json.dumps(command))
                 
-                # Wait a bit between commands
-                await asyncio.sleep(2)
+                # Wait longer for processing
+                await asyncio.sleep(4)
                 
                 # Try to receive any server messages
                 try:
-                    response = await asyncio.wait_for(websocket.recv(), timeout=0.5)
+                    response = await asyncio.wait_for(websocket.recv(), timeout=1.0)
                     response_data = json.loads(response)
                     logger.info(f"Server response: {response_data['type']}")
                     if response_data['type'] == 'game_state':
@@ -57,7 +57,7 @@ async def test_client():
                     logger.info("No immediate response from server")
             
             logger.info("Test commands completed. Staying connected for a few more seconds...")
-            await asyncio.sleep(5)
+            await asyncio.sleep(10)  # Stay connected longer
             
     except websockets.exceptions.InvalidMessage:
         logger.error("Could not connect to server. Make sure the server is running.")

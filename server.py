@@ -192,6 +192,7 @@ class Server:
                 
                 agent = self.agents.get(agent_id)
                 if not agent:
+                    logger.warning(f"Agent {agent_id} not found for action {action}")
                     continue
                 
                 # Process different action types
