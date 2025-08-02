@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 async def test_client():
     """Test client that connects to the server and sends some basic commands."""
-    uri = "ws://localhost:8765/ws"
+    uri = "ws://localhost:8765"
     
     try:
         logger.info(f"Connecting to Proxiverse server at {uri}")
@@ -59,7 +59,11 @@ async def test_client():
             logger.info("Test commands completed. Staying connected for a few more seconds...")
             await asyncio.sleep(5)
             
-    except websockets.exceptions.ConnectionRefused:
+    except websockets.exceptions.InvalidMessage:
+        logger.error("Could not connect to server. Make sure the server is running.")
+    except websockets.exceptions.ConnectionClosedError:
+        logger.error("Connection closed unexpectedly.")
+    except ConnectionRefusedError:
         logger.error("Could not connect to server. Make sure the server is running.")
     except Exception as e:
         logger.error(f"Error: {e}")

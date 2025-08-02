@@ -10,6 +10,7 @@ import logging
 from world_engine import WorldEngine
 from economic_engine import EconomicEngine
 from server import Server
+from http_server import run_http_server
 from entities import Resource
 
 # Configure logging
@@ -117,12 +118,16 @@ async def run_server(host: str = "localhost", port: int = 8765, tick_rate: float
     world.print_world_summary()
     
     try:
-        # Start the WebSocket server
+        # Start both WebSocket and HTTP servers
         await server.start_server()
+        http_server, http_runner = await run_http_server(world, port + 1)
         
-        # Run the server and simulation concurrently
+        logger.info(f"🌐 WebSocket server: ws://{host}:{port}")
+        logger.info(f"📊 Status page: http://{host}:{port + 1}")
+        
+        # Run all servers and simulation concurrently
         await asyncio.gather(
-            server.server.wait_closed(),  # Keep server running
+            server.server.wait_closed(),  # Keep WebSocket server running
             simulation_loop(world, economic_engine, server, tick_rate)
         )
         
@@ -132,7 +137,7 @@ async def run_server(host: str = "localhost", port: int = 8765, tick_rate: float
         logger.error(f"Server error: {e}")
     finally:
         # Cleanup
-        logger.info("Shutting down server...")
+        logger.info("Shutting down servers...")
         await server.stop_server()
         logger.info("Server shutdown complete")
 

@@ -214,12 +214,11 @@ class Server:
         if actions_processed > 0:
             logger.debug(f"Processed {actions_processed} actions")
     
-    async def handle_client(self, websocket: WebSocketServerProtocol, path: str):
+    async def handle_client(self, websocket: WebSocketServerProtocol):
         """Handle a single client connection.
         
         Args:
             websocket: The WebSocket connection
-            path: The connection path
         """
         try:
             # Register the new client
@@ -249,29 +248,17 @@ class Server:
         """Start the WebSocket server."""
         logger.info(f"Starting Proxiverse server on {self.host}:{self.port}")
         
-        # Create the WebSocket server with proper error handling
+        # Create the WebSocket server
         self.server = await websockets.serve(
             self.handle_client,
             self.host,
-            self.port,
-            process_request=self._process_request
+            self.port
         )
         
         logger.info("Proxiverse server started successfully")
-        logger.info(f"WebSocket URL: ws://{self.host}:{self.port}/ws")
+        logger.info(f"WebSocket URL: ws://{self.host}:{self.port}")
         logger.info("Use test_client.py or a WebSocket client to connect")
         return self.server
-    
-    async def _process_request(self, path, headers):
-        """Process incoming requests and handle HTTP vs WebSocket."""
-        if path == "/" or path == "/status":
-            # Return a simple status page for HTTP requests
-            return (200, [("Content-Type", "text/html")], self._get_status_html())
-        elif path == "/ws":
-            # WebSocket connections should use /ws path
-            return None  # Let websockets handle it
-        else:
-            return (404, [("Content-Type", "text/plain")], b"Not Found")
     
     def _get_status_html(self):
         """Generate a simple status HTML page."""

@@ -2,3 +2,4 @@
 # Phase 1: Using only Python standard library
 # Phase 2: WebSocket server for multi-agent networking
 websockets>=12.0
+aiohttp>=3.8.0
